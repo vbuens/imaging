@@ -61,12 +61,7 @@ for imagefile in glob.glob(str(input_dir)+"/*"+str(format)):
     K = 5    #number of colours
     ret,labels,center_colours=cv2.kmeans(Z,K,None,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
     # Now convert back into uint8, and make original image
-    center_colours = np.uint8(center_colours)
-    res = center_colours[labels.flatten()]
-    res2 = res.reshape((image.shape))
-    plt.imshow(res2)
-    plt.savefig('%s/%s_%i_kmeans.jpg' % (output_dir,imagefile.split('.')[0].split('/')[1],K))
-    plt.clf()
+    print_image(imagefile,image,center_colours,labels,k,output_dir)
 
     counts={}
     perc={}
@@ -106,7 +101,6 @@ for imagefile in glob.glob(str(input_dir)+"/*"+str(format)):
     ### GET COLOURS
     colors={}
     for i in range(0,len(center_colours)):
-    #    print("HEALTHY, INF \n %s, %s" % (healthy_values,inf_values))
         rc=center_colours[i][0] ; gc=center_colours[i][1] ; bc=center_colours[i][2]
         rd=(healthy_values[0]-rc)**2
         gd=(healthy_values[1]-gc)**2
@@ -117,8 +111,6 @@ for imagefile in glob.glob(str(input_dir)+"/*"+str(format)):
         bd_inf=(inf_values[2]-bc)**2
         inf_rgb=rd_inf + gd_inf + bd_inf
         colors[color_name(center_colours)[i]]=[healthy_rgb,inf_rgb]
-#        print(colors[color_name(center_colours)[i]].index(min(colors[color_name(center_colours)[i]])))
-
 
     color_name(center_colours)
     ## WITH 5 CLUSTERS : 16.47 OF INFECTION
@@ -127,8 +119,7 @@ for imagefile in glob.glob(str(input_dir)+"/*"+str(format)):
     count=0
     if 'black' in colors:
         colors.pop('black')
-#    print(center_colours)
-#    print(colors.keys())
+
     for color in colors.keys():
         if colors[color].index(min(colors[color])) == 0 :
             print("Healthy: %s" % color)

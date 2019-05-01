@@ -29,9 +29,7 @@ def color_name(center_colours):
 def print_image(imagefile,image,center_colours,labels,k,output_dir):
     center_colours = np.uint8(center_colours)
     res = center_colours[labels.flatten()]
-    #print(len(center_colours))
     res2 = res.reshape((image.shape))
-    #cv2.imshow('res2',res2)
     plt.imshow(res2)
     plt.title(imagefile.split('.')[0])
     plt.savefig('%s/standard_%s_%i_kmeans.jpg' % (output_dir,imagefile.split('.')[0],k))
