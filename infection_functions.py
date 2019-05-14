@@ -5,6 +5,7 @@ import utils
 import cv2
 import numpy as np
 import webcolors
+import os 
 
 # Functions:
 def get_image(image_path):
@@ -31,8 +32,9 @@ def print_image(imagefile,image,center_colours,labels,k,output_dir):
     res = center_colours[labels.flatten()]
     res2 = res.reshape((image.shape))
     plt.imshow(res2)
-    plt.title(imagefile.split('.')[0])
-    plt.savefig('%s/standard_%s_%i_kmeans.jpg' % (output_dir,imagefile.split('.')[0],k))
+    plt.title(os.path.splitext(os.path.basename(imagefile))[0]) 
+    print('Imagefile: %s ' % os.path.basename(imagefile)) 
+    plt.savefig('%s/%s_%i_kmeans.jpg' % (output_dir,os.path.splitext(os.path.basename(imagefile))[0],k))
     plt.clf()
 
 ## Getting the healthy and infected thresholds

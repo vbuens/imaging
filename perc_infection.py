@@ -7,11 +7,11 @@ import glob
 import webcolors
 import numpy as np
 import matplotlib.pyplot as plt
-from infection_functions import get_image,color_name,print_image, get_threshold_values
+from infection_functions import get_image,color_name,print_image, get_threshold_values, closest_colour
 
 # Parse arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--k', type=int, nargs='?', help='output directory for results (default=5)',default=5)
+parser.add_argument('-k','--k', type=int, nargs='?', help='output directory for results (default=5)',default=5)
 parser.add_argument('-o','--outputdir', type=str, help='output directory for results (default=results)',default="results")
 parser.add_argument('-i','--inputdir', required= True, type=str, help='directory where the images to analyse are found')
 parser.add_argument('-f','--format', type=str, help='format of the pictures (default=.tif)', default=".tif")
@@ -31,10 +31,11 @@ for file in [healthy,infected]:
         open(file, 'r')
     except FileNotFoundError:
         parser.error("File %s not found" % file)
-if os.path.exists(input_dir) == 'False':
+if os.path.exists(input_dir) == False:
     parser.error("Directory %s not found" % input_dir)
-if os.path.exists(output_dir) == 'False':
+if os.path.exists(output_dir) == False:
     os.mkdir(output_dir)
+
 #sys.stdout = open('stdout.txt', 'w')
 print('''
 Output directory : %s
@@ -46,10 +47,15 @@ Number of clusters to find infection (k) : %i
 Final output: %s
 ''' % (output_dir,input_dir,format,healthy,infected,K,output_file))
 
-healthy_values,inf_values = get_threshold_values(healthy,infected,K,output_dir)
+healthy_values,inf_values = get_threshold_values(healthy,infected,7,output_dir)
 print("Healhy values: %s \nInfected values: %s" % (str(healthy_values),str(inf_values)))
 
+#healthy_values=[75.95638, 85.271736, 46.02764]
+#inf_values=[178.80173, 160.89029, 100.88039]
+
 output = open(output_file, "a")
+
+output.write("Image,K,%Infection")
 
 for imagefile in glob.glob(str(input_dir)+"/*"+str(format)):
     image = get_image(imagefile)
@@ -58,10 +64,10 @@ for imagefile in glob.glob(str(input_dir)+"/*"+str(format)):
     # convert to np.float32
     Z = np.float32(Z)
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-    K = 5    #number of colours
+    K = K    #number of colours
     ret,labels,center_colours=cv2.kmeans(Z,K,None,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
     # Now convert back into uint8, and make original image
-    print_image(imagefile,image,center_colours,labels,k,output_dir)
+    print_image(imagefile,image,center_colours,labels,K,output_dir)
 
     counts={}
     perc={}
@@ -72,9 +78,8 @@ for imagefile in glob.glob(str(input_dir)+"/*"+str(format)):
 
     # We get ordered colors by iterating through the keys
     ordered_colors = [center_colours[i]/255 for i in counts.keys()]
-    plt.pie(counts.values(),labels=colorlabels,colors=ordered_colors)
-    plt.savefig('%s/%s_%i_pie_black.jpg' % (output_dir,imagefile.split('.')[0].split('/')[1],K))
-    plt.show()
+    #plt.pie(counts.values(),labels=colorlabels,colors=ordered_colors)
+    #plt.savefig('%s/%s_%i_pie_black.jpg' % (output_dir,imagefile.split('.')[0].split('/')[1],K))
     plt.clf()
 
     blackindex=colorlabels.index('black')
@@ -93,9 +98,8 @@ for imagefile in glob.glob(str(input_dir)+"/*"+str(format)):
     newpercs=[round((i/sum(perc.values()))*100,2) for i in perc.values()]
 
     plt.pie(counts.values(),labels=colorlabels,colors=ordered_colors)
+    plt.title(os.path.splitext(os.path.basename(imagefile))[0])
     plt.savefig('%s/%s_%i_pie.jpg' % (output_dir,imagefile.split('.')[0].split('/')[1],K))
-    plt.title(imagefile.split(".")[0])
-    plt.show()
     plt.clf()
 
     ### GET COLOURS
@@ -129,6 +133,6 @@ for imagefile in glob.glob(str(input_dir)+"/*"+str(format)):
         count+=1
 
     print(percinf)
-    output.write("\n%s,%f" % (imagefile.split('.')[0].split('/')[1],percinf))
+    output.write("\n%s,%i,%f" % (str(os.path.splitext(os.path.basename(imagefile))[0]),K,percinf))
 
 output.close()
